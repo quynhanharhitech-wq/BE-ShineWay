@@ -1,0 +1,207 @@
+version: "3.8"
+
+services:
+  # --- API Gateway (Nginx) ---
+  api-gateway:
+    image: nginx:1.24.0-alpine
+    container_name: api-gateway
+    ports:
+      - "8080:80"
+    restart: always
+    volumes:
+      - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - app-network
+    depends_on:
+      - iamservice
+      - inventoryservice
+      - menuservice
+      - orderservice
+      - paymentservice
+      - reportservice
+      - chatservice
+      - notificationservice
+      - consulservice
+
+  # --- Zookeeper ---
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    restart: always
+    networks:
+      - app-network
+
+  # --- Kafka Broker ---
+  kafka-1:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka-1
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "19092:19092"
+    restart: always
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092,EXTERNAL://103.166.183.142:19092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - app-network
+
+  # --- Redis ---
+  redis:
+    image: redis:7.2.4
+    container_name: redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      app-network:
+        aliases:
+          - redis-master`
+  # iam-service -> upstream iam-service (iamservice:2000)
+  iamservice:
+    build:
+      context: ./iam-service   # chỉnh đường dẫn nếu khác
+      dockerfile: Dockerfile
+    container_name: iamservice
+    ports:
+      - "2000:2000"
+    restart: on-failure
+    networks:
+      - app-network
+    depends_on:
+      - kafka-1
+      - redis
+
+  # inventory-service -> upstream inventory-service (inventoryservice:2001)
+  inventoryservice:
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile
+    container_name: inventoryservice
+    ports:
+      - "2001:2001"
+    restart: on-failure
+    networks:
+      - app-network
+    depends_on:
+      - kafka-1
+      - redis
+
+  # menu-service -> upstream menu-service (menuservice:2002)
+  menuservice:
+    build:
+      context: ./menu-service
+    # nếu dùng multi-module monorepo, thay Dockerfile tương ứng
+      dockerfile: Dockerfile
+    container_name: menuservice
+    ports:
+      - "2002:2002"
+    restart: on-failure
+    networks:
+      - app-network
+    depends_on:
+      - kafka-1
+      - redis
+
+  # order-service -> upstream order-service (orderservice:2003)
+  orderservice:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: orderservice
+    ports:
+      - "2003:2003"
+    restart: on-failure
+    networks:
+      - app-network
+    depends_on:
+      - kafka-1
+      - redis
+
+  # payment-service -> upstream payment-service (paymentservice:2004)
+  paymentservice:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: paymentservice
+    ports:
+      - "2004:2004"
+    restart: on-failure
+    networks:
+      - app-network
+    depends_on:
+      - kafka-1
+      - redis
+
+  # report-service -> upstream report-service (reportservice:2005)
+  reportservice:
+    build:
+      context: ./report-service
+      dockerfile: Dockerfile
+    container_name: reportservice
+    ports:
+      - "2005:2005"
+    restart: on-failure
+    networks:
+      - app-network
+    depends_on:
+      - kafka-1
+      - redis
+
+  # chat-service -> upstream chat-service (chatservice:2006)
+  chatservice:
+    build:
+      context: ./chat-service
+      dockerfile: Dockerfile
+    container_name: chatservice
+    ports:
+      - "2006:2006"
+    restart: on-failure
+    networks:
+      - app-network
+    depends_on:
+      - kafka-1
+      - redis
+
+  # notification-service -> upstream notification-service (notificationservice:2007)
+  notificationservice:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notificationservice
+    ports:
+      - "2007:2007"
+    restart: on-failure
+    networks:
+      - app-network
+    depends_on:
+      - kafka-1
+      - redis
+
+  # consul-service -> upstream consul-service (consulservice:2008)
+  consulservice:
+    build:
+      context: ./consul-service
+      dockerfile: Dockerfile
+    container_name: consulservice
+    ports:
+      - "2008:2008"
+    restart: on-failure
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
