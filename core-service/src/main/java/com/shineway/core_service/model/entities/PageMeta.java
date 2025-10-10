@@ -15,7 +15,7 @@ import lombok.*;
 public class PageMeta {
     private Integer page; // 0-based
     private Integer size;
-    private Long totalElements;
+    private Long totalElements; // pagesize
     private Integer totalPages;
     private Boolean hasNext;
     private Boolean hasPrevious;
