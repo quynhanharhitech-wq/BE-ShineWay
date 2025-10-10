@@ -25,8 +25,8 @@ java -version
 :: Cài đặt PostgreSQL 17
 echo Cài đặt PostgreSQL 17...
 powershell -Command "Invoke-WebRequest -Uri https://get.enterprisedb.com/postgresql/postgresql-%POSTGRES_VERSION%+-+windows-x64.exe -OutFile postgresql_installer.exe"
-start /wait postgresql_installer.exe --mode unattended --superpassword "yourpassword" --datadir "C:\Program Files\PostgreSQL\%POSTGRES_VERSION%\data" --servicename "postgresql-%POSTGRES_VERSION%"
-del postgresql_installer.exe
+start /wait postgresql-17.5-1-windows-x64.exe --mode unattended --superpassword "yourpassword" --datadir "C:\Program Files\PostgreSQL\%POSTGRES_VERSION%\data" --servicename "postgresql-%POSTGRES_VERSION%"
+del postgresql-17.5-1-windows-x64.exe
 
 :: Kiểm tra PostgreSQL
 echo Kiểm tra PostgreSQL...
