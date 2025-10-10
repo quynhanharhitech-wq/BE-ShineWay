@@ -13,7 +13,7 @@ echo Cài đặt Java 17...
 if not exist "%ProgramFiles%\Java\jdk-%JAVA_VERSION%" (
     echo Tải và cài đặt Java 17...
     curl -L -o jdk-17.zip https://download.oracle.com/java/17/latest/jdk-17_windows-x64_bin.zip
-    tar -xf jdk-17.zip -C "%ProgramFiles%"
+    powershell -Command "Expand-Archive -Path jdk-17.zip -DestinationPath '%ProgramFiles%\Java'"
     del jdk-17.zip
 ) else (
     echo Java 17 đã được cài đặt.
@@ -29,7 +29,12 @@ start /wait postgresql_installer.exe --mode unattended --superpassword "yourpass
 del postgresql_installer.exe
 
 :: Kiểm tra PostgreSQL
+echo Kiểm tra PostgreSQL...
 psql --version
+IF %ERRORLEVEL% NEQ 0 (
+    echo PostgreSQL không cài đặt đúng cách. Vui lòng kiểm tra lại.
+    exit /b 1
+)
 
 :: Cài đặt Maven
 echo Cài đặt Maven...
@@ -39,7 +44,7 @@ del apache-maven.zip
 
 :: Cài đặt PostgreSQL và chạy script SQL
 echo Chạy script SQL để tạo cơ sở dữ liệu...
-psql -U postgres -c "CREATE DATABASE mydatabase;"
+psql -U postgres -c "CREATE DATABASE shineway;"
 
 :: Đảm bảo rằng script SQL nằm cùng thư mục với file .bat
 set SQL_PATH=%~dp0shineway_db.sql
